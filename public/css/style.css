@@ -108,7 +108,7 @@ ul, li{
   height: 200px;
   width: inherit;
   outline: none;
-  padding: 0px 10px;
+  padding: 10px 12px;
   margin-right: 10px;
 }
 
@@ -126,6 +126,7 @@ ul, li{
 
 .messages {
   font-size: 150%;
+  word-wrap:break-word;
 }
 
 .me {

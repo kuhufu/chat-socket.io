@@ -19,15 +19,17 @@ $(function () {
 
   // Prompt for setting a username
   var username;
-  var connected = false;
-  var typing = false;
+  var connected = false
+  var typing = false
+  var connecanUseNewAPI = false;
+  var tycanUseNewAPI = false;
   var lastTypingTime;
   var $currentInput// = $usernameInput.focus();
 
   var socket = io();
 
   function updateUserList(users) {
-    users.forEach((data)=>{
+    users.forEach((data) => {
       $('#users').append($('<li id="' + data.uid + '">' + data.username + '</li>'));
     })
     var size = $('#users').children().length;
@@ -35,7 +37,7 @@ $(function () {
   }
 
   function readHistory(histories) {
-    histories.forEach((data)=>{
+    histories.forEach((data) => {
       addChatMessage(data)
     })
   }
@@ -78,51 +80,52 @@ $(function () {
 
   // Log a message
   function log(message, options) {
-    if ('Notification' in window) {
-      notify('', message)
-    } else {
-      var $el = $('<li>').addClass('log').text(message);
-      addMessageElement($el, options);
-    }
-
+    notify('', message)
   }
 
-  // 通知消息
-  function notify(title, msg) {
-    if (!Notification) {
-      console.log('your browser do not support Notification')
-      var $el = $('<li>').addClass('log').text(message);
-      addMessageElement($el, options);
-      return
+  function notify(title, message) {
+    if ('Notification' in window) {
+      Notification.requestPermission(function (status) {
+        //status默认值'default'等同于拒绝 'denied' 意味着用户不想要通知 'granted' 意味着用户同意启用通知
+        if ("granted" == status) {
+          notifyByNewAPI('', message)
+        } else {
+          notifyByElement(message)
+        }
+      });
     }
-    Notification.requestPermission(function (status) {
-      //status默认值'default'等同于拒绝 'denied' 意味着用户不想要通知 'granted' 意味着用户同意启用通知
-      if ("granted" == status) {
+  }
 
-        var n = new Notification(title, {
-          body: msg,
-          icon: "../image/head.png"
-        });
-
-        n.onshow = function () {
-          console.log('Notification showed')
-          setTimeout(() => {
-            n.close()
-          }, 1700)
-        }
-
-        n.onclick = function () {
-          console.log('Notification clicked')
-          n.close()
-        }
-        n.onerror = function () {
-          console.log("Notification encounter a error");
-        }
-        n.onclose = function () {
-          console.log("Notification is closed");
-        }
-      }
+  // 通过html5中的桌面消息api进行通知
+  function notifyByNewAPI(title, message) {
+    var n = new Notification(title, {
+      body: message,
+      icon: "../image/head.png"
     });
+
+    n.onshow = function () {
+      console.log('Notification showed')
+      setTimeout(() => {
+        n.close()
+      }, 2000)
+    }
+
+    n.onclick = function () {
+      console.log('Notification clicked')
+      n.close()
+    }
+    n.onerror = function () {
+      console.log("Notification encounter a error");
+    }
+    n.onclose = function () {
+      console.log("Notification is closed");
+    }
+  }
+
+  // 通过在页面添加元素进行通知
+  function notifyByElement(message) {
+    var $el = $('<li>').addClass('log').text(message);
+    addMessageElement($el);
   }
 
   // 将消息添加到消息列表
@@ -132,7 +135,7 @@ $(function () {
     options = options || {};
     messageFrom = messageFrom || '';
     if ($typingMessages.length !== 0) {
-      options.fade = false;
+      options.canUseNewAPI = false;
       $typingMessages.remove();
     }
     var $usernameDiv = $('<span class="username"/>')
@@ -174,7 +177,7 @@ $(function () {
   // el - The element to add as a message
   // options.fade - If the element should fade-in (default = true)
   // options.prepend - If the element should prepend
-  //   all other messages (default = false)
+  //   all other messages (defcanUseNewAPI = false)
   function addMessageElement(el, options) {
     var $el = $(el);
 
@@ -186,7 +189,7 @@ $(function () {
       options.fade = true;
     }
     if (typeof options.prepend === 'undefined') {
-      options.prepend = false;
+      options.precanUseNewAPI = false;
     }
 
     // Apply options
@@ -219,8 +222,9 @@ $(function () {
         var typingTimer = (new Date()).getTime();
         var timeDiff = typingTimer - lastTypingTime;
         if (timeDiff >= TYPING_TIMER_LENGTH && typing) {
+          typing = false
           socket.emit('stop typing');
-          typing = false;
+          tycanUseNewAPI = false;
         }
       }, TYPING_TIMER_LENGTH);
     }
@@ -250,14 +254,9 @@ $(function () {
     // When the client hits ENTER on their keyboard
     if (event.which === 13) {
       if (username) {
-        if (!event.ctrlKey) {
-          sendMessage();
-          socket.emit('stop typing');
-          typing = false;
-        } else {
-          var val = $('.inputMessage').val()
-          $('.inputMessage').val(val + '\n')
-        }
+        sendMessage();
+        socket.emit('stop typing');
+        tycanUseNewAPI = false;
       } else {
         setLoginInfo();
       }
