@@ -8,7 +8,7 @@ var port = process.env.PORT || 3000;
 var rooms = [];
 var histories = [];
 
-// 将message信息加入到指定roomid的历史纪录中
+// 将message加入到指定roomid的历史纪录中
 function addToHistory(roomid, messageInfo) {
   if (!histories[roomid]) {
     histories[roomid] = [];
@@ -19,14 +19,16 @@ function addToHistory(roomid, messageInfo) {
   histories[roomid].push(messageInfo);
 }
 
-// 将userInfo信息加入到指定roomid的room中
+// 将用户信息加入到指定roomid的room中
 function addToRoom(roomid, userInfo) {
+  // 如果房间不存在，则创建房间
   if (!rooms[roomid]) {
     rooms[roomid] = [];
   }
   rooms[roomid].push(userInfo);
 }
 
+// 将离开聊天室的用户从room中移除
 function removeFromRoom(roomid, uid) {
   if (!rooms[roomid]) { return; }
   for (let i = 0; i < rooms[roomid].length; i++) {
@@ -35,12 +37,27 @@ function removeFromRoom(roomid, uid) {
       break;
     }
   }
+  cleanHistories(roomid)
+}
 
-  // 如果房间没人，清空此房间的历史聊天消息
-  if(rooms[roomid].length == 0){
+// 如果房间没人，清空此房间的历史聊天消息
+function cleanHistories(roomid) {
+  if (rooms[roomid].length == 0) {
+    console.log('clean histories of room: ' + roomid)
     histories[roomid] = []
   }
 }
+
+// 每隔24小时检查房间，如果房间没人则删除房间
+const CLEAN_TIME = 24 * 3600 * 1000
+setInterval(function () {
+  for (i in rooms) {
+    if (rooms[i].length == 0) {
+      console.log('delete room: ' + i)
+      delete (rooms[i])
+    }
+  }
+}, CLEAN_TIME)
 
 server.listen(port, function () {
   console.log('Server listening at port %d', port);
@@ -56,7 +73,7 @@ io.on('connection', function (socket) {
   socket.on('new message', function (data) {
     // we tell the client to execute 'new message'
     var roomid = socket.roomid;
-    
+
     //将消息放入历史记录中
     addToHistory(roomid, {
       username: socket.username,
@@ -74,7 +91,7 @@ io.on('connection', function (socket) {
   socket.on('add user', function (loginInfo) {
     if (addedUser) return;
     var username = loginInfo['username'];
-    var roomid = loginInfo['roomid'];
+    var roomid = 'r_' + loginInfo['roomid'];  // 将数组索引转化为字符串，而非有可能出现的数字
     addToRoom(roomid, {
       uid: socket.id,
       username: username
