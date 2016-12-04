@@ -27,22 +27,17 @@ $(function () {
   var socket = io();
 
   function updateUserList(users) {
-    console.log($('#users').children().length)
-    console.log(users)
-    for (var i = 0; i < users.length; i++) {
-      var data = users[i];
+    users.forEach((data)=>{
       $('#users').append($('<li id="' + data.uid + '">' + data.username + '</li>'));
-    }
+    })
     var size = $('#users').children().length;
-    console.log(size)
     $('#onlineNum').text(size);
   }
 
   function readHistory(histories) {
-    for (var i = 0; i < histories.length; i++) {
-      var data = histories[i];
+    histories.forEach((data)=>{
       addChatMessage(data)
-    }
+    })
   }
 
   // Sets the client's username and room id
@@ -75,7 +70,6 @@ $(function () {
       addChatMessage({
         username: username,
         message: message,
-        // roomid: roomid
       }, 'me');
       // tell server to execute 'new message' and send along one parameter
       socket.emit('new message', message);
@@ -84,48 +78,52 @@ $(function () {
 
   // Log a message
   function log(message, options) {
-    // var $el = $('<li>').addClass('log').text(message);
-    //addMessageElement($el, options);
+    if ('Notification' in window) {
+      notify('', message)
+    } else {
+      var $el = $('<li>').addClass('log').text(message);
+      addMessageElement($el, options);
+    }
 
-    notify('', message)
   }
 
   // 通知消息
   function notify(title, msg) {
-    var Notification = window.Notification || window.mozNotification || window.webkitNotification;
-    if (Notification) {
-      Notification.requestPermission(function (status) {
-        //status默认值'default'等同于拒绝 'denied' 意味着用户不想要通知 'granted' 意味着用户同意启用通知
-        if ("granted" != status) {
-          return;
-        } else {
-          //var tag = "sds" + Math.random();
-          var notify = new Notification(
-            title,
-            {
-              //dir: 'auto',
-              //lang: 'zh-CN',
-              body: msg //通知的具体内容
-              // tag: //实例化的notification的id
-              //icon: //通知的缩略图,//icon 支持ico、png、jpg、jpeg格式
-            }
-          );
-          notify.onclick = function () {
-            //如果通知消息被点击,通知窗口将被激活
-            window.focus();
-          };
-          notify.onerror = function () {
-            console.log("HTML5桌面消息出错！！！");
-          };
-          notify.onclose = function () {
-            console.log("HTML5桌面消息关闭！！！");
-          };
-        }
-      });
-    } else {
-      console.log("您的浏览器不支持桌面消息");
+    if (!Notification) {
+      console.log('your browser do not support Notification')
+      var $el = $('<li>').addClass('log').text(message);
+      addMessageElement($el, options);
+      return
     }
-  };
+    Notification.requestPermission(function (status) {
+      //status默认值'default'等同于拒绝 'denied' 意味着用户不想要通知 'granted' 意味着用户同意启用通知
+      if ("granted" == status) {
+
+        var n = new Notification(title, {
+          body: msg,
+          icon: "../image/head.png"
+        });
+
+        n.onshow = function () {
+          console.log('Notification showed')
+          setTimeout(() => {
+            n.close()
+          }, 2000)
+        }
+
+        n.onclick = function () {
+          console.log('Notification clicked')
+          n.close()
+        }
+        n.onerror = function () {
+          console.log("Notification encounter a error");
+        }
+        n.onclose = function () {
+          console.log("Notification is closed");
+        }
+      }
+    });
+  }
 
   // 将消息添加到消息列表
   function addChatMessage(data, messageFrom, options) {
@@ -256,7 +254,7 @@ $(function () {
           sendMessage();
           socket.emit('stop typing');
           typing = false;
-        }else{
+        } else {
           var val = $('.inputMessage').val()
           $('.inputMessage').val(val + '\n')
         }
@@ -281,9 +279,6 @@ $(function () {
   // Whenever the server emits 'login', log the login message
   socket.on('login', function (data) {
     connected = true;
-    // Display the welcome message
-    // var message = "Welcome to Socket.IO Chat – ";
-
     updateUserList(data.onlineUsers);
     readHistory(data.histories);
   });
