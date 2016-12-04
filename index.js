@@ -49,8 +49,6 @@ server.listen(port, function () {
 // 路由静态文件
 app.use(express.static(__dirname + '/public'));
 
-
-
 io.on('connection', function (socket) {
   var addedUser = false;
 

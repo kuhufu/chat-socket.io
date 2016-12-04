@@ -108,7 +108,7 @@ $(function () {
           console.log('Notification showed')
           setTimeout(() => {
             n.close()
-          }, 2000)
+          }, 1700)
         }
 
         n.onclick = function () {
