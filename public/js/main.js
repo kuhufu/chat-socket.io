@@ -54,7 +54,7 @@ $(function () {
       $currentInput = $inputMessage.focus();
 
       // Tell the server your username
-      socket.emit('add user', {
+      socket.emit('addUser', {
         username: username,
         roomid: roomid
       });
@@ -73,8 +73,8 @@ $(function () {
         username: username,
         message: message,
       }, 'me');
-      // tell server to execute 'new message' and send along one parameter
-      socket.emit('new message', message);
+      // tell server to execute 'newMessage' and send along one parameter
+      socket.emit('newMessage', message);
     }
   }
 
@@ -223,7 +223,7 @@ $(function () {
         var timeDiff = typingTimer - lastTypingTime;
         if (timeDiff >= TYPING_TIMER_LENGTH && typing) {
           typing = false
-          socket.emit('stop typing');
+          socket.emit('stopTyping');
           tycanUseNewAPI = false;
         }
       }, TYPING_TIMER_LENGTH);
@@ -255,7 +255,7 @@ $(function () {
     if (event.which === 13) {
       if (username) {
         sendMessage();
-        socket.emit('stop typing');
+        socket.emit('stopTyping');
         tycanUseNewAPI = false;
       } else {
         setLoginInfo();
@@ -266,7 +266,6 @@ $(function () {
   $inputMessage.on('input', function () {
     updateTyping();
   });
-
 
   // Focus input when clicking on the message input's border
   $inputMessage.click(function () {
@@ -282,13 +281,13 @@ $(function () {
     readHistory(data.histories);
   });
 
-  // Whenever the server emits 'new message', update the chat body
-  socket.on('new message', function (data) {
+  // Whenever the server emits 'newMessage', update the chat body
+  socket.on('newMessage', function (data) {
     addChatMessage(data);
   });
 
-  // Whenever the server emits 'user joined', log it in the chat body
-  socket.on('user joined', function (data) {
+  // Whenever the server emits 'userJoined', log it in the chat body
+  socket.on('userJoined', function (data) {
     log(data.username + ' joined');
     updateUserList([{
       uid: data.uid,
@@ -296,8 +295,8 @@ $(function () {
     }])
   });
 
-  // Whenever the server emits 'user left', log it in the chat body
-  socket.on('user left', function (data) {
+  // Whenever the server emits 'userLeft', log it in the chat body
+  socket.on('userLeft', function (data) {
     log(data.username + ' left');
     removeChatTyping(data);
     var uid = '#' + data.uid;
@@ -310,8 +309,8 @@ $(function () {
     addChatTyping(data);
   });
 
-  // Whenever the server emits 'stop typing', kill the typing message
-  socket.on('stop typing', function (data) {
+  // Whenever the server emits 'stopTyping', kill the typing message
+  socket.on('stopTyping', function (data) {
     removeChatTyping(data);
   });
 });

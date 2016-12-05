@@ -5,6 +5,13 @@ var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
 
+server.listen(port, function () {
+  console.log('Server listening at port %d', port);
+});
+
+// 路由静态文件
+app.use(express.static(__dirname + '/public'));
+
 var rooms = [];
 var histories = [];
 
@@ -59,19 +66,12 @@ setInterval(function () {
   }
 }, CLEAN_TIME)
 
-server.listen(port, function () {
-  console.log('Server listening at port %d', port);
-});
-
-// 路由静态文件
-app.use(express.static(__dirname + '/public'));
-
 io.on('connection', function (socket) {
   var addedUser = false;
 
-  // when the client emits 'new message', this listens and executes
-  socket.on('new message', function (data) {
-    // we tell the client to execute 'new message'
+  // when the client emits 'newMessage', this listens and executes
+  socket.on('newMessage', function (data) {
+    // we tell the client to execute 'newMessage'
     var roomid = socket.roomid;
 
     //将消息放入历史记录中
@@ -81,14 +81,14 @@ io.on('connection', function (socket) {
       message: data
     });
 
-    socket.broadcast.to(roomid).emit('new message', {
+    socket.broadcast.to(roomid).emit('newMessage', {
       username: socket.username,
       message: data
     });
   });
 
-  // when the client emits 'add user', this listens and executes
-  socket.on('add user', function (loginInfo) {
+  // when the client emits 'addUser', this listens and executes
+  socket.on('addUser', function (loginInfo) {
     if (addedUser) return;
     var username = loginInfo['username'];
     var roomid = 'r_' + loginInfo['roomid'];  // 将数组索引转化为字符串，而非有可能出现的数字
@@ -110,7 +110,7 @@ io.on('connection', function (socket) {
       histories: histories[roomid]
     });
     // echo globally (all clients) that a person has connected
-    socket.broadcast.to(roomid).emit('user joined', {
+    socket.broadcast.to(roomid).emit('userJoined', {
       username: socket.username,
       numUsers: rooms[roomid].length,
       uid: socket.id
@@ -125,10 +125,10 @@ io.on('connection', function (socket) {
     });
   });
 
-  // when the client emits 'stop typing', we broadcast it to others
-  socket.on('stop typing', function () {
+  // when the client emits 'stopTyping', we broadcast it to others
+  socket.on('stopTyping', function () {
     var roomid = socket.roomid;
-    socket.broadcast.to(roomid).emit('stop typing', {
+    socket.broadcast.to(roomid).emit('stopTyping', {
       username: socket.username
     });
   });
@@ -139,7 +139,7 @@ io.on('connection', function (socket) {
     removeFromRoom(roomid, socket.id)
     if (addedUser) {
       // echo globally that this client has left
-      socket.broadcast.to(roomid).emit('user left', {
+      socket.broadcast.to(roomid).emit('userLeft', {
         username: socket.username,
         numUsers: rooms[roomid].length,
         uid: socket.id
