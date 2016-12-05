@@ -1,9 +1,8 @@
-// Setup basic express server
-var express = require('express');
-var app = express();
-var server = require('http').createServer(app);
-var io = require('socket.io')(server);
-var port = process.env.PORT || 3000;
+const express = require('express');
+const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+const port = process.env.PORT || 3000;
 
 server.listen(port, function () {
   console.log('Server listening at port %d', port);
@@ -12,35 +11,38 @@ server.listen(port, function () {
 // 路由静态文件
 app.use(express.static(__dirname + '/public'));
 
-var rooms = [];
-var histories = [];
+const rooms = [];
+const histories = [];
 
 // 将message加入到指定roomid的历史纪录中
 function addToHistory(roomid, messageInfo) {
-  if (!histories[roomid]) {
-    histories[roomid] = [];
+  // 如果房间聊天历史记录不存在，则创建历史记录列表
+  if(!histories[roomid]){
+     histories[roomid] = []
   }
-  while (histories[roomid].length > 100) {
-    histories[roomid].shift();
+  var history = histories[roomid]
+  while (history.length > 100) {
+    history.shift();
   }
-  histories[roomid].push(messageInfo);
+  history.push(messageInfo);
 }
 
 // 将用户信息加入到指定roomid的room中
 function addToRoom(roomid, userInfo) {
-  // 如果房间不存在，则创建房间
-  if (!rooms[roomid]) {
-    rooms[roomid] = [];
+  // 如果房间用户列表不存在，则创建房间
+  if(!rooms[roomid]){
+    rooms[roomid] = []
   }
   rooms[roomid].push(userInfo);
 }
 
 // 将离开聊天室的用户从room中移除
 function removeFromRoom(roomid, uid) {
-  if (!rooms[roomid]) { return; }
-  for (let i = 0; i < rooms[roomid].length; i++) {
-    if (rooms[roomid][i].uid == uid) {
-      rooms[roomid].splice(i, 1);
+  var room = rooms[roomid]
+  if (!room) { return; }
+  for (let i = 0; i < room.length; i++) {
+    if (room[i].uid == uid) {
+      room.splice(i, 1);
       break;
     }
   }
@@ -138,7 +140,6 @@ io.on('connection', function (socket) {
     var roomid = socket.roomid;
     removeFromRoom(roomid, socket.id)
     if (addedUser) {
-      // echo globally that this client has left
       socket.broadcast.to(roomid).emit('userLeft', {
         username: socket.username,
         numUsers: rooms[roomid].length,

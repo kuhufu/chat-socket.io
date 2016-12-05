@@ -237,7 +237,7 @@ $(function () {
     });
   }
 
-  // Gets the color of a username through our hash function
+  // 通过hash函数获取username的颜色
   function getUsernameColor(username) {
     // Compute hash code
     var hash = 7;
@@ -249,7 +249,7 @@ $(function () {
     return COLORS[index];
   }
 
-  // Keyboard events
+  // 键盘事件
   $window.keydown(function (event) {
     // When the client hits ENTER on their keyboard
     if (event.which === 13) {
@@ -272,7 +272,7 @@ $(function () {
     $inputMessage.focus();
   });
 
-  // Socket events
+  // Socket 事件
 
   // Whenever the server emits 'login', log the login message
   socket.on('login', function (data) {
@@ -315,6 +315,7 @@ $(function () {
   });
 });
 
+// 将登陆页面的roomid设置为1，便于测试
 $(document).ready(function () {
   $('#roomid').val('1')
 })
