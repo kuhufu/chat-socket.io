@@ -58,7 +58,7 @@ function cleanHistories(roomid) {
 }
 
 // 每隔24小时检查房间，如果房间没人则删除房间
-const CLEAN_TIME = 24 * 3600 * 1000
+const CLEAN_TIME = 10 * 1000
 setInterval(function () {
   for (i in rooms) {
     if (rooms[i].length == 0) {
