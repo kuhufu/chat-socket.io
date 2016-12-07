@@ -27,7 +27,7 @@ function addToHistory(roomid, messageInfo) {
   history.push(messageInfo)
 }
 
-// 将用户信息加入到指定roomid的room中
+// 将用户信息加入到指定roomid的room中 
 function addToRoom(roomid, userInfo) {
   // 如果房间用户列表不存在，则创建房间
   if(!rooms[roomid]){
